@@ -18,6 +18,9 @@ type KafkaClusterClient struct {
 	token            string
 }
 
+// NewKafkaClusterClient constructs a new client to connect to the relevant Kafka Confluent Cluster in order to query ACLs
+//
+// kafkaApiEndpoint and clusterID can be retrieved from the Cluster struct's ID and APIEndpoint fields
 func NewKafkaClusterClient(kafkaApiEndpoint *url.URL, clusterID string, token string) *KafkaClusterClient {
 	_baseURL := fmt.Sprintf("%s/%s%s/", kafkaApiEndpoint, baseURLSuffix, clusterID)
 	baseURL, _ := url.Parse(_baseURL)

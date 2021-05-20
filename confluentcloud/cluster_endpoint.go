@@ -26,7 +26,7 @@ func NewKafkaClusterClient(kafkaApiEndpoint *url.URL, clusterID string, token st
 	baseURL, _ := url.Parse(_baseURL)
 
 	client := resty.New()
-	client.SetDebug(false)
+	client.SetDebug(true)
 	c := &KafkaClusterClient{KafkaApiEndpoint: kafkaApiEndpoint, BaseURL: baseURL, BaseURLSuffix: baseURLSuffix}
 	c.client = client
 	c.token = token

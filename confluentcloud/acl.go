@@ -41,33 +41,8 @@ type Entry struct {
 	PermissionType string `json:"permissionType"`
 }
 
-func (c *Client) GetAccessToken() (*string, error) {
-	rel, err := url.Parse("access_tokens")
-	if err != nil {
-		return nil, err
-	}
-
-	u := c.BaseURL.ResolveReference(rel)
-
-	response, err := c.NewRequest().
-		SetBody(AccessTokenRequest{}).
-		SetResult(&AccessTokenResponse{}).
-		SetError(&ErrorResponse{}).
-		Post(u.String())
-
-	if err != nil {
-		return nil, err
-	}
-
-	if response.IsError() {
-		return nil, fmt.Errorf("access_tokens: %s", response.Error().(*ErrorResponse).Error.Message)
-	}
-
-	return &response.Result().(*AccessTokenResponse).Token, nil
-}
-
 func (c *Client) ListACLs(apiEndpoint *url.URL, clusterID string, aclRequest *ACLRequest) ([]ACL, error) {
-	token, err := c.GetAccessToken()
+	token, err := c.GetKafkaClusterAccessToken()
 	if err != nil {
 		return nil, err
 	}

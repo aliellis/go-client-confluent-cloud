@@ -18,6 +18,11 @@ type KafkaClusterClient struct {
 	token            string
 }
 
+type AccessTokenRequest struct{}
+type AccessTokenResponse struct {
+	Token string `json:"token"`
+}
+
 // NewKafkaClusterClient constructs a new client to connect to the relevant Kafka Confluent Cluster in order to query ACLs
 //
 // kafkaApiEndpoint and clusterID can be retrieved from the ID and APIEndpoint fields within Cluster

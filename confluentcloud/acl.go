@@ -5,11 +5,6 @@ import (
 	"net/url"
 )
 
-type AccessTokenRequest struct{}
-type AccessTokenResponse struct {
-	Token string `json:"token"`
-}
-
 type ACLRequest struct {
 	PatternFilter *PatternFilter `json:"patternFilter"`
 	EntryFilter   *EntryFilter   `json:"entryFilter"`
@@ -41,6 +36,13 @@ type Entry struct {
 	PermissionType string `json:"permissionType"`
 }
 
+type ACLCreateRequestW = []ACLCreateRequest
+type ACLCreateRequest struct {
+	Pattern *Pattern `json:"pattern"`
+	Entry   *Entry   `json:"entry"`
+}
+type CreateACLResponse = []ACLCreateRequest
+
 func (c *Client) ListACLs(apiEndpoint *url.URL, clusterID string, aclRequest *ACLRequest) ([]ACL, error) {
 	token, err := c.GetKafkaClusterAccessToken()
 	if err != nil {
@@ -69,5 +71,35 @@ func (c *Client) ListACLs(apiEndpoint *url.URL, clusterID string, aclRequest *AC
 	}
 
 	result := response.Result().(*ListACLResponse)
+	return *result, nil
+}
+
+func (c *Client) CreateACLs(apiEndpoint *url.URL, clusterID string, aclCreateRequestW *ACLCreateRequestW) (interface{}, error) {
+	token, err := c.GetKafkaClusterAccessToken()
+	if err != nil {
+		return nil, err
+	}
+	cc := NewKafkaClusterClient(apiEndpoint, clusterID, *token)
+
+	rel, err := url.Parse("acls")
+	if err != nil {
+		return nil, err
+	}
+
+	u := cc.BaseURL.ResolveReference(rel)
+
+	response, err := c.NewRequest().
+		SetAuthToken(*token).
+		SetBody(aclCreateRequestW).
+		SetResult(&CreateACLResponse{}).
+		Post(u.String())
+	if err != nil {
+		return nil, err
+	}
+	if response.IsError() {
+		return nil, fmt.Errorf("create_acls: %s", response.Body())
+	}
+
+	result := response.Result().(*CreateACLResponse)
 	return *result, nil
 }

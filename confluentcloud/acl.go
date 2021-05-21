@@ -43,6 +43,25 @@ type ACLCreateRequest struct {
 }
 type CreateACLResponse = []ACLCreateRequest
 
+type ACLDeleteRequestW = []ACLDeleteRequest
+type ACLDeleteRequest struct {
+	PatternFilter *DeletePatternFilter `json:"patternFilter"`
+	EntryFilter   *DeleteEntryFilter   `json:"entryFilter"`
+}
+type DeletePatternFilter struct {
+	ResourceType string `json:"resourceType"`
+	Name         string `json:"name"`
+	PatternType  string `json:"patternType"`
+}
+type DeleteEntryFilter struct {
+	Principal      string `json:"principal"`
+	Operation      string `json:"operation"`
+	Host           string `json:"host"`
+	PermissionType string `json:"permissionType"`
+}
+type DeleteACLResponse = []ACLDeleteRequest
+
+
 func (c *Client) ListACLs(apiEndpoint *url.URL, clusterID string, aclRequest *ACLRequest) ([]ACL, error) {
 	token, err := c.GetKafkaClusterAccessToken()
 	if err != nil {
@@ -101,5 +120,35 @@ func (c *Client) CreateACLs(apiEndpoint *url.URL, clusterID string, aclCreateReq
 	}
 
 	result := response.Result().(*CreateACLResponse)
+	return *result, nil
+}
+
+func (c *Client) DeleteACLs(apiEndpoint *url.URL, clusterID string, aclDeleteRequestW *ACLDeleteRequestW) (interface{}, error) {
+	token, err := c.GetKafkaClusterAccessToken()
+	if err != nil {
+		return nil, err
+	}
+	cc := NewKafkaClusterClient(apiEndpoint, clusterID, *token)
+
+	rel, err := url.Parse("acls/delete")
+	if err != nil {
+		return nil, err
+	}
+
+	u := cc.BaseURL.ResolveReference(rel)
+
+	response, err := c.NewRequest().
+		SetAuthToken(*token).
+		SetBody(aclDeleteRequestW).
+		SetResult(&DeleteACLResponse{}).
+		Delete(u.String())
+	if err != nil {
+		return nil, err
+	}
+	if response.IsError() {
+		return nil, fmt.Errorf("delete_acls: %s", response.Body())
+	}
+
+	result := response.Result().(*DeleteACLResponse)
 	return *result, nil
 }
